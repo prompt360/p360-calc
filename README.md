@@ -58,7 +58,35 @@ The Mathematical Calculator MCP Server provides the following tools:
 
 ## Integration with Claude Desktop
 
-To use this MCP server with Claude Desktop:
+### Method 1: Configure in Claude Desktop
+
+Add the server to your Claude Desktop configuration file:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add the following to the `mcpServers` section:
+
+```json
+{
+  "mcpServers": {
+    "calculator": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "calculator-mcp-server@git+https://github.com/huhabla/calculator-mcp-server.git",
+        "--",
+        "calculator-mcp-server",
+        "--stdio"
+      ]
+    }
+  }
+}
+```
+
+**Note**: The `--stdio` flag is required for proper integration with Claude Desktop. The `--` separates uvx arguments from the calculator server arguments.
+
+### Method 2: Install with FastMCP
 
 1. Make sure you have uv installed ([Installation Guide](https://github.com/astral-sh/uv))
 

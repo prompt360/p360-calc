@@ -1,4 +1,5 @@
 from mcp.server.fastmcp import FastMCP
+import argparse
 import math
 import numpy as np
 from scipy import stats
@@ -742,5 +743,13 @@ def factorize(expression: str) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
+def main():
+    parser = argparse.ArgumentParser(description="Mathematical Calculator MCP Server")
+    parser.add_argument("--stdio", action="store_true", help="Use STDIO transport instead of SSE")
+    args = parser.parse_args()
+    
+    transport = "stdio" if args.stdio else TRANSPORT
+    app.run(transport=transport)
+
 if __name__ == "__main__":
-    app.run(transport=TRANSPORT)
+    main()
