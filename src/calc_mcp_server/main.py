@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 import argparse
 import math
 import numpy as np
@@ -12,14 +12,9 @@ import matplotlib.pyplot as plt
 from sympy import integrate as sympy_integrate
 
 # Create MCP Server
-app = FastMCP(
-    title="Mathematical Calculator",
-    description="A server for complex mathematical calculations",
-    version="1.0.0",
-    dependencies=["numpy", "scipy", "sympy", "matplotlib"],
-)
+mcp = FastMCP("A server for complex mathematical calculations","1.0.0")
 
-TRANSPORT = "sse"
+
 
 ALLOW_FUNCTION = {
     "math": math,
@@ -72,7 +67,7 @@ ALLOW_FUNCTION = {
 }
 
 
-@app.tool()
+@mcp.tool
 def calculate(expression: str) -> dict:
     """
     Evaluates a mathematical expression and returns the result.
@@ -99,10 +94,6 @@ def calculate(expression: str) -> dict:
         >>> calculate("invalid * expression")
         {'error': "name 'invalid' is not defined"}
 
-    Notes:
-        - Use 'x' as the variable (e.g., x**2, not x²)
-        - Multiplication must be explicitly indicated with * (e.g., 2*x, not 2x)
-        - Powers are represented with ** (e.g., x**2, not x^2)
     """
     try:
         # Safe evaluation of the expression
@@ -116,7 +107,7 @@ def calculate(expression: str) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def solve_equation(equation: str) -> dict:
     """
     Solves an algebraic equation for x and returns all solutions.
@@ -141,11 +132,6 @@ def solve_equation(equation: str) -> dict:
         {'solutions': '[2]'}
         >>> solve_equation("x = 0")
         {'solutions': '[0]'}
-
-    Notes:
-        - Use 'x' as the variable (e.g., x**2, not x²)
-        - Multiplication must be explicitly indicated with * (e.g., 2*x, not 2x)
-        - Powers are represented with ** (e.g., x**2, not x^2)
     """
     try:
         x = symbols("x")
@@ -164,7 +150,7 @@ def solve_equation(equation: str) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def differentiate(expression: str, variable: str = "x") -> dict:
     """
     Computes the derivative of a mathematical expression with respect to a variable.
@@ -181,22 +167,6 @@ def differentiate(expression: str, variable: str = "x") -> dict:
     Returns:
         On success: {"result": <derivative as string>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> differentiate("x**2")
-        {'result': '2*x'}
-        >>> differentiate("sin(x)")
-        {'result': 'cos(x)'}
-        >>> differentiate("x*y", "y")
-        {'result': 'x'}
-        >>> differentiate("exp(x)")
-        {'result': 'exp(x)'}
-
-    Notes:
-        - Use mathematical notation with explicit operators (* for multiplication)
-        - Powers are represented with ** (e.g., x**2, not x^2)
-        - For trigonometric functions, use sin(x), cos(x), etc.
-        - Only support for one variable at a time (implicit differentiation not supported)
     """
     try:
         var = symbols(variable)
@@ -207,7 +177,7 @@ def differentiate(expression: str, variable: str = "x") -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def integrate(expression: str, variable: str = "x") -> dict:
     """
     Computes the indefinite integral of a mathematical expression with respect to a variable.
@@ -225,21 +195,7 @@ def integrate(expression: str, variable: str = "x") -> dict:
         On success: {"result": <integral as string>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> integrate("x**2")
-        {'result': 'x**3/3'}
-        >>> integrate("sin(x)")
-        {'result': '-cos(x)'}
-        >>> integrate("exp(x)")
-        {'result': 'exp(x)'}
-        >>> integrate("1/x")
-        {'result': 'log(x)'}
-        >>> integrate("x*y", "y")
-        {'result': 'x*y**2/2'}
 
-    Notes:
-        - The result is the indefinite integral without the constant of integration
-        - Complex expressions may be returned in simplified form
     """
     try:
         var = symbols(variable)
@@ -250,7 +206,7 @@ def integrate(expression: str, variable: str = "x") -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def mean(data: List[float]) -> dict:
     """
     Computes the mean of a list of numbers.
@@ -275,7 +231,7 @@ def mean(data: List[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def variance(data: List[float]) -> dict:
     """
     Computes the variance of a list of numbers.
@@ -286,10 +242,6 @@ def variance(data: List[float]) -> dict:
     Returns:
         On success: {"result": <variance value>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> variance([1, 2, 3, 4])
-        {'result': 1.25}
     """
     try:
         result = float(np.var(data))
@@ -298,7 +250,7 @@ def variance(data: List[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def standard_deviation(data: List[float]) -> dict:
     """
     Computes the standard deviation of a list of numbers.
@@ -310,9 +262,6 @@ def standard_deviation(data: List[float]) -> dict:
         On success: {"result": <standard deviation value>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> standard_deviation([1, 2, 3, 4])
-        {'result': 1.118033988749895}
     """
     try:
         result = float(np.std(data))
@@ -321,7 +270,7 @@ def standard_deviation(data: List[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def median(data: List[float]) -> dict:
     """
     Computes the median of a list of numbers.
@@ -332,10 +281,6 @@ def median(data: List[float]) -> dict:
     Returns:
         On success: {"result": <median value>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> median([1, 2, 3, 4])
-        {'result': 2.5}
     """
     try:
         result = float(np.median(data))
@@ -344,7 +289,7 @@ def median(data: List[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def mode(data: List[float]) -> dict:
     """
     Computes the mode of a list of numbers.
@@ -356,13 +301,6 @@ def mode(data: List[float]) -> dict:
         On success: {"result": <mode value>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> mode([1, 2, 2, 3])
-        {'result': 2.0}
-        >>> mode([1, 1, 2, 2])
-        {'result': 1.0}
-        >>> mode([])
-        {'error': 'Cannot compute mode of empty array'}
     """
     try:
         if not data:
@@ -374,7 +312,7 @@ def mode(data: List[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def correlation_coefficient(data_x: List[float], data_y: List[float]) -> dict:
     """
     Computes the Pearson correlation coefficient between two lists of numbers.
@@ -386,10 +324,6 @@ def correlation_coefficient(data_x: List[float], data_y: List[float]) -> dict:
     Returns:
         On success: {"result": <correlation coefficient>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> correlation_coefficient([1, 2, 3], [4, 5, 6])
-        {'result': 1.0}
     """
     try:
         result = np.corrcoef(data_x, data_y)[0, 1]
@@ -398,7 +332,7 @@ def correlation_coefficient(data_x: List[float], data_y: List[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def linear_regression(data: List[Tuple[float, float]]) -> dict:
     """
     Performs linear regression on a set of points and returns the slope and intercept.
@@ -410,9 +344,6 @@ def linear_regression(data: List[Tuple[float, float]]) -> dict:
         On success: {"slope": <slope value>, "intercept": <intercept value>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> linear_regression([(1, 2), (2, 3), (3, 5)])
-        {'slope': 1.5, 'intercept': 0.3333333333333335}
     """
     try:
         x = np.array([point[0] for point in data])
@@ -423,7 +354,7 @@ def linear_regression(data: List[Tuple[float, float]]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def confidence_interval(data: List[float], confidence: float = 0.95) -> dict:
     """
     Computes the confidence interval for the mean of a dataset.
@@ -436,11 +367,6 @@ def confidence_interval(data: List[float], confidence: float = 0.95) -> dict:
         On success: {"confidence_interval": <(lower_bound, upper_bound)>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> import numpy as np
-        >>> np.random.seed(42)  # For reproducible results
-        >>> confidence_interval([1, 2, 3, 4])
-        {'confidence_interval': (0.445739743239121, 4.5542602567608785)}
     """
     try:
         mean_value = np.mean(data)
@@ -456,7 +382,7 @@ def confidence_interval(data: List[float], confidence: float = 0.95) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def matrix_addition(matrix_a: List[List[float]], matrix_b: List[List[float]]) -> dict:
     """
     Adds two matrices.
@@ -469,9 +395,6 @@ def matrix_addition(matrix_a: List[List[float]], matrix_b: List[List[float]]) ->
         On success: {"result": <resulting matrix>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> matrix_addition([[1, 2], [3, 4]], [[5, 6], [7, 8]])
-        {'result': [[6, 8], [10, 12]]}
     """
     try:
         result = np.add(matrix_a, matrix_b).tolist()
@@ -480,7 +403,7 @@ def matrix_addition(matrix_a: List[List[float]], matrix_b: List[List[float]]) ->
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def matrix_multiplication(
     matrix_a: List[List[float]], matrix_b: List[List[float]]
 ) -> dict:
@@ -495,9 +418,6 @@ def matrix_multiplication(
         On success: {"result": <resulting matrix>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> matrix_multiplication([[1, 2], [3, 4]], [[5, 6], [7, 8]])
-        {'result': [[19, 22], [43, 50]]}
     """
     try:
         result = np.dot(matrix_a, matrix_b).tolist()
@@ -506,7 +426,7 @@ def matrix_multiplication(
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def matrix_transpose(matrix: List[List[float]]) -> dict:
     """
     Transposes a matrix.
@@ -518,9 +438,6 @@ def matrix_transpose(matrix: List[List[float]]) -> dict:
         On success: {"result": <transposed matrix>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> matrix_transpose([[1, 2], [3, 4]])
-        {'result': [[1, 3], [2, 4]]}
     """
     try:
         result = np.transpose(matrix).tolist()
@@ -529,7 +446,7 @@ def matrix_transpose(matrix: List[List[float]]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def matrix_determinant(matrix: List[List[float]]) -> dict:
     """
     Multiplies two matrices.
@@ -541,9 +458,6 @@ def matrix_determinant(matrix: List[List[float]]) -> dict:
         On success: {"result": <resulting vector>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> matrix_determinant([[1, 2], [3, 4]])
-        {'result': -2.0}
     """
     try:
         result = np.linalg.det(matrix)
@@ -552,7 +466,7 @@ def matrix_determinant(matrix: List[List[float]]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def vector_dot_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
     """
     Multiplies two matrices.
@@ -564,10 +478,6 @@ def vector_dot_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
     Returns:
         On success: {"result": <resulting vector>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> vector_dot_product([1, 2], [7, 8])
-        {'result': 23}
     """
     try:
         result = np.dot(vector_a, vector_b).tolist()
@@ -576,7 +486,7 @@ def vector_dot_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def vector_cross_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
     """
     Multiplies two matrices.
@@ -588,10 +498,6 @@ def vector_cross_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict
     Returns:
         On success: {"result": <resulting vector>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> vector_cross_product([1, 2, 3], [4, 5, 6])
-        {'result': [-3, 6, -3]}
     """
     try:
         result = np.cross(vector_a, vector_b).tolist()
@@ -600,7 +506,7 @@ def vector_cross_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def vector_magnitude(vector: tuple[float]) -> dict:
     """
     Multiplies two matrices.
@@ -611,10 +517,6 @@ def vector_magnitude(vector: tuple[float]) -> dict:
     Returns:
         On success: {"result": <resulting vector>}
         On error: {"error": <error message>}
-
-    Examples:
-        >>> vector_magnitude([1, 2, 3])
-        {'result': 3.7416573867739413}
     """
     try:
         result = np.linalg.norm(vector).tolist()
@@ -623,7 +525,7 @@ def vector_magnitude(vector: tuple[float]) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def plot_function(
     expression: str, start: int = -10, end: int = 10, step: int = 100
 ) -> dict:
@@ -637,14 +539,6 @@ def plot_function(
         On success: {"result": "Plot generated successfully."}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> plot_function("x**2")
-        {'result': 'Plot generated successfully.'}
-
-    Notes:
-        - Use 'x' as the variable (e.g., x**2, not x²)
-        - Multiplication must be explicitly indicated with * (e.g., 2*x, not 2x)
-        - Powers are represented with ** (e.g., x**2, not x^2)
     """
     x = sp.Symbol("x")
     try:
@@ -671,7 +565,7 @@ def plot_function(
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def summation(expression: str, start: int = 0, end: int = 10) -> dict:
     """
     Calculates the summation of a function from start to end.
@@ -685,9 +579,7 @@ def summation(expression: str, start: int = 0, end: int = 10) -> dict:
         On success: {"result": <resulting summation>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> summation("x**2", 0, 10)
-        {'result': 385}
+   
     """
     try:
         x = sp.Symbol("x")
@@ -699,7 +591,7 @@ def summation(expression: str, start: int = 0, end: int = 10) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def expand(expression: str) -> dict:
     """
     Expands an expression.
@@ -711,9 +603,7 @@ def expand(expression: str) -> dict:
         On success: {"result": <expanded expression>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> expand("(x + 1)**2")
-        {'result': 'x**2 + 2*x + 1'}
+   
     """
     try:
         x = sp.Symbol("x")
@@ -723,7 +613,7 @@ def expand(expression: str) -> dict:
         return {"error": str(e)}
 
 
-@app.tool()
+@mcp.tool
 def factorize(expression: str) -> dict:
     """
     Factorizes an expression.
@@ -735,9 +625,7 @@ def factorize(expression: str) -> dict:
         On success: {"result": <factored expression>}
         On error: {"error": <error message>}
 
-    Examples:
-        >>> factorize("x**2 + 2*x + 1")
-        {'result': '(x + 1)**2'}
+    
     """
     try:
         x = sp.Symbol("x")
@@ -746,13 +634,6 @@ def factorize(expression: str) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-def main():
-    parser = argparse.ArgumentParser(description="Mathematical Calculator MCP Server")
-    parser.add_argument("--stdio", action="store_true", help="Use STDIO transport instead of SSE")
-    args = parser.parse_args()
-    
-    transport = "stdio" if args.stdio else TRANSPORT
-    app.run(transport=transport)
 
-if __name__ == "__main__":
-    main()
+    
+app = mcp.http_app()
