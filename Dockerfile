@@ -18,4 +18,4 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy the rest of the application code
 COPY /src /app/src
 
-CMD [ "uvicorn", "calc_mcp_server.main:app", "--host", "0.0.0.0", "--port", "5012"]
+CMD [ "uvicorn", "calc_mcp_server.main:app", "--host", "0.0.0.0", "--port", "5014"]

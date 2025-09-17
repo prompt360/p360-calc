@@ -1,6 +1,6 @@
 # Mathematical Calculator MCP Server
 
-This is a Model Context Protocol (MCP) server that provides  advanced mathematical calculation capabilities, including symbolic math, statistical analysis, and matrix operations.
+This  Model Context Protocol (MCP)server  is an adaptation of the MCP Math server that's been built to use streamable-http, FastMCP 2.10, python 3.12 and matplotlib 3.10.  In addition, we've added Docker and docker compose building for flexibility and portability across platforms.
 
 ## Features
 
