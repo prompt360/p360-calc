@@ -1,14 +1,15 @@
 from fastmcp import FastMCP
-import argparse
+import inspect
+import logging
 import math
+import os
+from functools import wraps
 import numpy as np
 from scipy import stats
 from sympy import symbols, solve, sympify, diff, integrate, oo, Sum
 from typing import List, Tuple
 import matplotlib.pyplot as plt
 import sympy as sp
-import numpy as np
-import matplotlib.pyplot as plt
 from sympy import integrate as sympy_integrate
 
 # Create MCP Server
@@ -67,7 +68,68 @@ ALLOW_FUNCTION = {
 }
 
 
+LOG_LEVEL_ENV_VAR = "CALC_MCP_LOG_LEVEL"
+logger = logging.getLogger("calc_mcp_server")
+
+
+def _resolve_log_level(level_name: str | None) -> int:
+    if isinstance(level_name, int):
+        return level_name
+    if not level_name:
+        return logging.INFO
+    numeric_level = getattr(logging, str(level_name).upper(), None)
+    if isinstance(numeric_level, int):
+        return numeric_level
+    return logging.INFO
+
+
+def configure_logging(level_name: str | None = None) -> None:
+    resolved = _resolve_log_level(level_name or os.getenv(LOG_LEVEL_ENV_VAR))
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        logging.basicConfig(
+            level=resolved,
+            format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+        )
+    else:
+        root_logger.setLevel(resolved)
+        for handler in root_logger.handlers:
+            handler.setLevel(resolved)
+    logger.setLevel(resolved)
+
+
+def log_tool_call(func):
+    signature = inspect.signature(func)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        bound = signature.bind_partial(*args, **kwargs)
+        bound.apply_defaults()
+        logger.info(
+            "Tool %s called with %s",
+            func.__name__,
+            dict(bound.arguments),
+        )
+        try:
+            result = func(*args, **kwargs)
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception("Tool %s raised an unexpected exception", func.__name__)
+            raise
+
+        if isinstance(result, dict) and "error" in result:
+            logger.warning("Tool %s returned error: %s", func.__name__, result["error"])
+        else:
+            logger.debug("Tool %s returned %s", func.__name__, result)
+        return result
+
+    return wrapper
+
+
+configure_logging()
+
+
 @mcp.tool
+@log_tool_call
 def calculate(expression: str) -> dict:
     """
     Evaluates a mathematical expression and returns the result.
@@ -108,6 +170,7 @@ def calculate(expression: str) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def solve_equation(equation: str) -> dict:
     """
     Solves an algebraic equation for x and returns all solutions.
@@ -151,6 +214,7 @@ def solve_equation(equation: str) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def differentiate(expression: str, variable: str = "x") -> dict:
     """
     Computes the derivative of a mathematical expression with respect to a variable.
@@ -178,6 +242,7 @@ def differentiate(expression: str, variable: str = "x") -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def integrate(expression: str, variable: str = "x") -> dict:
     """
     Computes the indefinite integral of a mathematical expression with respect to a variable.
@@ -207,6 +272,7 @@ def integrate(expression: str, variable: str = "x") -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def mean(data: List[float]) -> dict:
     """
     Computes the mean of a list of numbers.
@@ -232,6 +298,7 @@ def mean(data: List[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def variance(data: List[float]) -> dict:
     """
     Computes the variance of a list of numbers.
@@ -251,6 +318,7 @@ def variance(data: List[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def standard_deviation(data: List[float]) -> dict:
     """
     Computes the standard deviation of a list of numbers.
@@ -271,6 +339,7 @@ def standard_deviation(data: List[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def median(data: List[float]) -> dict:
     """
     Computes the median of a list of numbers.
@@ -290,6 +359,7 @@ def median(data: List[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def mode(data: List[float]) -> dict:
     """
     Computes the mode of a list of numbers.
@@ -313,6 +383,7 @@ def mode(data: List[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def correlation_coefficient(data_x: List[float], data_y: List[float]) -> dict:
     """
     Computes the Pearson correlation coefficient between two lists of numbers.
@@ -333,6 +404,7 @@ def correlation_coefficient(data_x: List[float], data_y: List[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def linear_regression(data: List[Tuple[float, float]]) -> dict:
     """
     Performs linear regression on a set of points and returns the slope and intercept.
@@ -355,6 +427,7 @@ def linear_regression(data: List[Tuple[float, float]]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def confidence_interval(data: List[float], confidence: float = 0.95) -> dict:
     """
     Computes the confidence interval for the mean of a dataset.
@@ -383,6 +456,7 @@ def confidence_interval(data: List[float], confidence: float = 0.95) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def matrix_addition(matrix_a: List[List[float]], matrix_b: List[List[float]]) -> dict:
     """
     Adds two matrices.
@@ -404,6 +478,7 @@ def matrix_addition(matrix_a: List[List[float]], matrix_b: List[List[float]]) ->
 
 
 @mcp.tool
+@log_tool_call
 def matrix_multiplication(
     matrix_a: List[List[float]], matrix_b: List[List[float]]
 ) -> dict:
@@ -427,6 +502,7 @@ def matrix_multiplication(
 
 
 @mcp.tool
+@log_tool_call
 def matrix_transpose(matrix: List[List[float]]) -> dict:
     """
     Transposes a matrix.
@@ -447,6 +523,7 @@ def matrix_transpose(matrix: List[List[float]]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def matrix_determinant(matrix: List[List[float]]) -> dict:
     """
     Multiplies two matrices.
@@ -467,6 +544,7 @@ def matrix_determinant(matrix: List[List[float]]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def vector_dot_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
     """
     Multiplies two matrices.
@@ -487,6 +565,7 @@ def vector_dot_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def vector_cross_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict:
     """
     Multiplies two matrices.
@@ -507,6 +586,7 @@ def vector_cross_product(vector_a: tuple[float], vector_b: tuple[float]) -> dict
 
 
 @mcp.tool
+@log_tool_call
 def vector_magnitude(vector: tuple[float]) -> dict:
     """
     Multiplies two matrices.
@@ -526,6 +606,7 @@ def vector_magnitude(vector: tuple[float]) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def plot_function(
     expression: str, start: int = -10, end: int = 10, step: int = 100
 ) -> dict:
@@ -566,6 +647,7 @@ def plot_function(
 
 
 @mcp.tool
+@log_tool_call
 def summation(expression: str, start: int = 0, end: int = 10) -> dict:
     """
     Calculates the summation of a function from start to end.
@@ -592,6 +674,7 @@ def summation(expression: str, start: int = 0, end: int = 10) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def expand(expression: str) -> dict:
     """
     Expands an expression.
@@ -614,6 +697,7 @@ def expand(expression: str) -> dict:
 
 
 @mcp.tool
+@log_tool_call
 def factorize(expression: str) -> dict:
     """
     Factorizes an expression.
